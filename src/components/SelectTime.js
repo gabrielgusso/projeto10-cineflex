@@ -10,6 +10,7 @@ export default function SelectTimeScreen() {
   const [items, setItems] = useState([])
   const [days, setDays] = useState([])
 
+
   useEffect(() => {
     const promisse = axios.get(
       `https://mock-api.driven.com.br/api/v5/cineflex/movies/${idFilm}/showtimes`
@@ -18,7 +19,6 @@ export default function SelectTimeScreen() {
     promisse.then((response) => {
       setItems(response.data)
       setDays(response.data.days)
-      console.log(response.data.days)
     })
 
     promisse.catch((error) => {
@@ -35,14 +35,20 @@ export default function SelectTimeScreen() {
       <ChoseTime>
         {days.map((e) => (
           <>
-            <p>{e.weekday} - {e.date}</p>
+            <p data-identifier="session-date" >{e.weekday} - {e.date}</p>
             <DivButtons>
-            <StlyledLink to={`/${items.id}/${e.showtimes[0].id}`}><button>15:00</button> </StlyledLink>
-            <StlyledLink to={`/${items.id}/${e.showtimes[1].id}`}><button>19:00</button> </StlyledLink>
+            <StlyledLink to={`/${items.id}/${e.showtimes[0].id}`}><button data-identifier="hour-minute-btn">15:00</button> </StlyledLink>
+            <StlyledLink to={`/${items.id}/${e.showtimes[1].id}`}><button data-identifier="hour-minute-btn">19:00</button> </StlyledLink>
             </DivButtons>
           </>
         ))}
       </ChoseTime>
+      <Footer>
+        <img data-identifier="movie-img-preview" src={items.posterURL} alt={items.title} />
+        <div>
+          <p data-identifier="movie-and-session-infos-preview" >{items.title}</p>
+        </div>
+      </Footer>
     </>
   )
 }
@@ -80,3 +86,26 @@ const DivButtons = styled.div`
 `
 const StlyledLink = styled(Link)`
 text-decoration: none;`
+
+const Footer = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 117px;
+  background: #dfe6ed;
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  font-size: 22px;
+  align-items: center;
+  padding-left: 10px;
+  img {
+    width: 48px;
+    height: 72px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    border: 8px solid white;
+  }
+  p {
+    margin-left: 10px;
+  }
+`

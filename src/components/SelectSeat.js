@@ -2,12 +2,20 @@ import styled from "styled-components"
 import { useParams } from "react-router-dom"
 import { useState, useEffect } from "react"
 import axios from "axios"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
-export default function SelectSeat() {
-  const { idDate } = useParams()
+export default function SelectSeat({setSuccessText}) {
+  const { idFilm, idDate } = useParams()
   const [items, setItems] = useState([])
   const [seats, setSeats] = useState([])
+  const [select, setSelect] = useState([])
+  const [movie, setMovie] = useState([])
+  const [date, setDate] = useState([])
+  const [name, setName] = useState("")
+  const [cpf, setCpf] = useState("")
+  const navigate = useNavigate()
+  const [selectNum, setSelectNum] = useState([])
+
   useEffect(() => {
     const promisse = axios.get(
       `https://mock-api.driven.com.br/api/v5/cineflex/showtimes/${idDate}/seats`
@@ -16,13 +24,46 @@ export default function SelectSeat() {
     promisse.then((response) => {
       setItems(response.data)
       setSeats(response.data.seats)
-      console.log(response.data.seats)
+      setMovie(response.data.movie)
+      setDate(response.data.day)
     })
 
     promisse.catch((error) => {
       console.log(error.response.data)
     })
   }, [])
+
+  function Login(event) {
+    event.preventDefault()
+    const loginData = {
+      ids: select,
+      name,
+      cpf,
+    }
+    const URL = "https://mock-api.driven.com.br/api/v5/cineflex/seats/book-many"
+    const request = axios.post(URL, loginData)
+
+    request.then((res) => {
+      setSuccessText({
+        filmName: movie.title,
+        filmDay: date.weekday,
+        filmTime: items.name,
+        seat: selectNum,
+        name,
+        cpf
+      })
+      navigate(`/${idFilm}/${idDate}/success`)
+    })
+
+    request.catch((err) => {
+      console.log(err)
+    })
+  }
+
+  function allSelects(e) {
+    setSelect([...select, e.id])
+    setSelectNum([...selectNum, e.name])
+  }
 
   return (
     <>
@@ -31,32 +72,72 @@ export default function SelectSeat() {
       </Text>
       <AllSeats>
         {seats.map((e) => (
-          <Seat color={e.isAvailable ? "#c3cfd9" : "#fbe192"}>{e.name}</Seat>
+          <Seat
+          data-identifier="seat"
+            color={
+              e.isAvailable
+                ? select.includes(e.id)
+                  ? "#1AAE9E"
+                  : "#c3cfd9"
+                : "#fbe192"
+            }
+            onClick={() => {
+              select.includes(e.id)
+                ? setSelect(select.filter((f) => f !== e.id))
+                : e.isAvailable
+                ? allSelects(e)
+                : alert("Esse assento não está disponível")
+            }}
+          >
+            {e.name}
+          </Seat>
         ))}
       </AllSeats>
       <Subtitle>
-        <SubtitleDiv>
-          <Select />
+        <SubtitleDiv >
+          <Select data-identifier="seat-selected-subtitle"
+          />
           <p>Selecionado</p>
         </SubtitleDiv>
         <SubtitleDiv>
-          <Avaliable />
+          <Avaliable data-identifier="seat-available-subtitle" />
           <p>Disponível</p>
         </SubtitleDiv>
         <SubtitleDiv>
-          <Unavailable />
+          <Unavailable data-identifier="seat-unavailable-subtitle" />
           <p>Indisponível</p>
         </SubtitleDiv>
       </Subtitle>
-      <Form>
+      <Form onSubmit={Login}>
         <label htmlFor="nome">Nome do comprador:</label>
-        <input type="text" id="nome" placeholder="Digite seu nome..." />
+        <input
+        data-identifier="buyer-name-input"
+          type="text"
+          id="nome"
+          placeholder="Digite seu nome..."
+          onChange={(e) => setName(e.target.value)}
+        />
         <label htmlFor="cpf">CPF do comprador:</label>
-        <input type="text" id="cpf" placeholder="Digite seu CPF..." />
+        <input
+        data-identifier="buyer-cpf-input"
+          type="text"
+          id="cpf"
+          placeholder="Digite seu CPF..."
+          onChange={(e) => setCpf(e.target.value)}
+        />
         <ButtonFlex>
-          <button>Reservar assento(s)</button>
+          <button type="submit" data-identifier="reservation-btn" >Reservar assento(s)</button>
         </ButtonFlex>
       </Form>
+      <Footer>
+        <img src={movie.posterURL} alt={movie.title} />
+        <div>
+          <p>{movie.title}</p>
+          <p>
+            {date.weekday} - {items.name}
+          </p>
+        </div>
+      </Footer>
     </>
   )
 }
@@ -68,7 +149,30 @@ const Text = styled.div`
   h1 {
     color: #293845;
     font-size: 24px;
-    margin: 50px 0 50px 0;
+    margin: 25px 0 15px 0;
+  }
+`
+
+const Footer = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 117px;
+  background: #dfe6ed;
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  font-size: 22px;
+  align-items: center;
+  padding-left: 10px;
+  img {
+    width: 48px;
+    height: 72px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    border: 8px solid white;
+  }
+  p {
+    margin-left: 10px;
   }
 `
 
@@ -89,6 +193,7 @@ const Seat = styled.div`
   align-items: center;
   font-size: 12px;
   margin: 10px 3px 10px 3px;
+  cursor: pointer;
 `
 const Subtitle = styled.div`
   display: flex;
@@ -131,7 +236,7 @@ const SubtitleDiv = styled.div`
   }
 `
 const Form = styled.form`
-  margin: 0 21px 0 24px;
+  margin: 0 21px 117px 24px;
   display: flex;
   padding: 4px;
   justify-content: center;
@@ -148,7 +253,7 @@ const Form = styled.form`
     height: 51px;
     border-radius: 3px;
     outline: none;
-    border: 1px solid #D5D5D5;
+    border: 1px solid #d5d5d5;
   }
 
   button {

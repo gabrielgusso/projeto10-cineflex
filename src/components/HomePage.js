@@ -13,7 +13,6 @@ export default function HomePage() {
 
     promisse.then((response) => {
       setItems(response.data)
-      console.log(response.data)
     })
 
     promisse.catch((error) => {
@@ -29,7 +28,7 @@ export default function HomePage() {
       <Films>
       {items.map((e) =>
       <Link to={`/${e.id}`}>
-        <FilmCard src={e.posterURL} alt={e.title} />
+        <FilmCard data-identifier="movie-outdoor" src={e.posterURL} alt={e.title} />
       </Link>
       
       )}
